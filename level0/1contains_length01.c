@@ -1,0 +1,32 @@
+#include <stdint.h>
+unsigned int contains1(uint64_t * wp) {
+	switch(wp[0]){
+	case 0x0000000000000061:return 1;
+	case 0x0000000000000062:return 1;
+	case 0x0000000000000063:return 1;
+	case 0x0000000000000064:return 1;
+	case 0x0000000000000065:return 1;
+	case 0x0000000000000066:return 1;
+	case 0x0000000000000067:return 1;
+	case 0x0000000000000068:return 1;
+	case 0x0000000000000069:return 1;
+	case 0x000000000000006A:return 1;
+	case 0x000000000000006B:return 1;
+	case 0x000000000000006C:return 1;
+	case 0x000000000000006D:return 1;
+	case 0x000000000000006E:return 1;
+	case 0x000000000000006F:return 1;
+	case 0x0000000000000070:return 1;
+	case 0x0000000000000071:return 1;
+	case 0x0000000000000072:return 1;
+	case 0x0000000000000073:return 1;
+	case 0x0000000000000074:return 1;
+	case 0x0000000000000075:return 1;
+	case 0x0000000000000076:return 1;
+	case 0x0000000000000077:return 1;
+	case 0x0000000000000078:return 1;
+	case 0x0000000000000079:return 1;
+	case 0x000000000000007A:return 1;
+	default:return 0;
+	}
+}
