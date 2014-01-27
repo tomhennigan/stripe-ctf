@@ -2,8 +2,8 @@
 
 set -eu
 
-if [ "$#" != 2 ]; then
-    echo >&2 "Usage: $0 <clone_url> <public_username>
+if [ "$#" != 3 ]; then
+    echo >&2 "Usage: $0 <clone_url> <public_username> <seed>
 
 A VERY SLOW mining implementation. This should give you an idea of
 where to start, but it probably won't successfully mine you any
@@ -21,6 +21,7 @@ fi
 
 export clone_spec=$1
 export public_username=$2
+export seed=$3
 
 prepare_index() {
     perl -i -pe 's/($ENV{public_username}: )(\d+)/$1 . ($2+1)/e' LEDGER.txt
@@ -45,14 +46,16 @@ solve() {
     while let counter=counter+1; do
 	echo -n .
 
-	body="tree 9553d91ca2fcef5a9ee7178e38cdfa9605af20ef
-parent 000000f90e262c8df1af70e3a73a63cd71200b89
-author CTF user <me@example.com> 1390419400 +0000
-committer CTF user <me@example.com> 1390419400 +0000
+    body=$(../cminer/miner $(git write-tree) $(git rev-parse HEAD) $(cat difficulty.txt) "${seed}")
 
-Give me a Gitcoin
+# 	body="tree 9553d91ca2fcef5a9ee7178e38cdfa9605af20ef
+# parent 000000f90e262c8df1af70e3a73a63cd71200b89
+# author CTF user <me@example.com> 1390419400 +0000
+# committer CTF user <me@example.com> 1390419400 +0000
 
-6135042"
+# Give me a Gitcoin
+
+# 6135042"
 
 	# See http://git-scm.com/book/en/Git-Internals-Git-Objects for
 	# details on Git objects.
@@ -60,7 +63,7 @@ Give me a Gitcoin
 
 	if [ "$sha1" "<" "$difficulty" ]; then
 	    echo
-	    echo "Mined a Gitcoin with commit: $sha1"
+	    echo "Mined a Gitcoin with commit:"
 	    echo -n "$body" | git hash-object -t commit --stdin -w  > /dev/null
 	    git reset --hard "$sha1" > /dev/null
 	    break
@@ -74,7 +77,7 @@ reset() {
 }
 
 # Set up repo
-local_path=./${clone_spec##*:}
+local_path=./${clone_spec##*:}-$(md5 -s "$seed" | rev | awk '{print$1}' | rev)
 
 if [ -d "$local_path" ]; then
     echo "Using existing repository at $local_path"
