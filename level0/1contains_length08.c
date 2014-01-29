@@ -1,6 +1,6 @@
 #include <stdint.h>
 unsigned int contains8(uint64_t * wp) {
-	switch(wp[0]){
+	switch(wp[0] | (uint64_t)(0x2020202020202020)){
 	case 0x6162656D61646E65:return 1;
 	case 0x61626D696C616B61:return 1;
 	case 0x61626F7269646E61:return 1;

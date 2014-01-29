@@ -1,6 +1,6 @@
 #include <stdint.h>
 unsigned int contains5(uint64_t * wp) {
-	switch(wp[0]){
+	switch(wp[0] | (uint64_t)(0x0000002020202020)){
 	case 0x0000006162616970:return 1;
 	case 0x0000006162617261:return 1;
 	case 0x0000006162617567:return 1;

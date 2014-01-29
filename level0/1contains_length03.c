@@ -1,6 +1,6 @@
 #include <stdint.h>
 unsigned int contains3(uint64_t * wp) {
-	switch(wp[0]){
+	switch(wp[0] | (uint64_t)(0x0000000000202020)){
 	case 0x0000000000616162:return 1;
 	case 0x000000000061616E:return 1;
 	case 0x0000000000616173:return 1;

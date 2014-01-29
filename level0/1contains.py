@@ -1,12 +1,11 @@
-import json
-import sys
 from collections import Counter
 from math import ceil
+import argparse
+import json
+import sys
 
-# words = ["fooo", "bar", "bo", "boo", "boooo", "booooo", "boooooo"]
 words = [line.rstrip() for line in sys.stdin]
-# words = [word for word in words if len(word) == 8]
-# words = ["smarkets"]
+tabchar = "\t"
 
 def pad(p, l=8, w="\0"):
     if len(p) % l:
@@ -22,6 +21,24 @@ def swap_uint64(val):
 def swap_uint32(val):
     val = ((val << 8) & 0xFF00FF00 ) | ((val >> 8) & 0xFF00FF )
     return ((val << 16) | (val >> 16)) & 0xffffffff
+
+# def splitinhalf(i):
+#     n = int(len(i) / 2)
+#     return [
+#         i[0:n],
+#         i[n:]
+#     ]
+
+def bucketsofsize(i, size):
+    buf = []
+    for v in i:
+        buf.append(v)
+        if len(buf) == size:
+            yield buf
+            del buf[:]
+
+    if buf:
+        yield buf
 
 itoword = {}
 
@@ -50,112 +67,85 @@ def collect_by_position(words):
 
     return ret
 
-tabchar = ""
-
-# words = [line.rstrip() for line in sys.stdin]
-# words = ["foo", "bar", "fo"]
-
 lenToWords = {}
 for word in words:
     lenToWords.setdefault(len(word), set()).add(pad(word))
 
-# print json.dumps(lenToWords, indent=2)
-# exit()
+def print_switch(tree, level=0, maxlevel=9001, length=1, prefix=tabchar):
+    keyspace = sorted(tree.keys(), key=swap_uint64)
 
-# def print_contains(words, name='contains'):
-# def collect_by_index(words):
-#     tree = {}
-#     for word in words:
-#         for index, character in enumerate(word):
-#             tree.setdefault(index, Counter())[character] += 1
-#         tree.setdefault(index + 1, Counter())[None] += 1
-#     ret = {}
-#     for level, c in tree.iteritems():
-#         ret[level] = sorted(c.keys(), key=lambda v: c[v], reverse=True)
-#     return ret
-
-# index_priority = collect_by_index(words)
-
-def print_switch(tree, level=0, maxlevel=9001, prefix=tabchar):
-    # print prefix + (tabchar * level) + 'printf("0x%08X\\n", wp[' + str(level) + ']);'
-
-    print prefix + (tabchar * level) + "switch(wp[" + str(level) + "]){"
-    # print prefix + (tabchar * level) + "if (word[" + str(level) + "] == '" + case.lower() + "') { return 1; }"
-    # print prefix + (tabchar * level) + "if (word[" + str(level) + "] == '\\0') { return 1; }"
-
-    # for idx, case in enumerate(sorted(tree.keys(), key=lambda c: index_priority[level].index(c))):
-    # for idx, case in enumerate(sorted(tree.keys(), key=ord)):
-    for idx, case in enumerate(sorted(tree.keys(), key=swap_uint64)):
-        subtree = tree[case]
-
-        if case is None:
-            print prefix + (tabchar * (level + 1)) + "case '\\0':return 1;"
-            # print prefix + (tabchar * level) + ("} else " if idx > 0 else "") + "if (word[" + str(level) + "] == '\\0') { return 1;"
-            # print prefix + (tabchar * level) + ("} else " if idx > 0 else "") + "if (1) { return 1;"
+    if level >= maxlevel:
+        r = length % 8
+        if r == 0:
+            nchars = 8
         else:
-            if level >= maxlevel:
-                # print prefix + (tabchar * (level + 1)) + "case '" + case.lower() + "':return 1;"
-                print prefix + (tabchar * level) + "case " + str("0x%016X" % swap_uint64(case)) + ":return 1;" #+ " // Word: %s" % itoword[case]
-            else:
-                # print prefix + (tabchar * (level + 1)) + "case '" + case.lower() + "':"
-                print prefix + (tabchar * level) + "case " + str("0x%016X" % swap_uint64(case)) + ":" #+ " // Word: %s" % itoword[case]
-                # print prefix + (tabchar * level) + ("} else " if idx > 0 else "") + "if (word[" + str(level) + "] == '" + case.lower() + "') {"
-                # print prefix + (tabchar * (level + 1)) + "case '" + case.upper() + "':"
-                print_switch(subtree, level=level + 1, maxlevel=maxlevel, prefix=prefix)
+            nchars = r
+    else:
+        nchars = 8
 
+    print prefix + (tabchar * level) + "switch(wp[" + str(level) + "] | (uint64_t)(0x" + ((8 - nchars) * '00') + (nchars * '20') + ")){"  # 0x2020202020202020
+    for idx, case in enumerate(keyspace):
+        subtree = tree[case]
+        if level >= maxlevel:
+            print prefix + (tabchar * level) + "case " + str("0x%016X" % swap_uint64(case)) + ":return 1;" #+ " // Word: %s" % itoword[case]
+        else:
+            print prefix + (tabchar * level) + "case " + str("0x%016X" % swap_uint64(case)) + ":" #+ " // Word: %s" % itoword[case]
+            print_switch(subtree, level=level + 1, maxlevel=maxlevel, length=length, prefix=prefix)
     print prefix + (tabchar * level) + "default:return 0;"
-    # print prefix + (tabchar * level) + "} else { return 0; }"
-    print prefix + (tabchar * level) + "}"
+    print prefix + (tabchar * level) + "}" # endswitch
 
-# print "inline unsigned int %s(char * word) {" % name
-# print_switch(
-#     collect_by_position(words)
-# )
-# print "}"
+    #partitions = bucketsofsize(keyspace, 20)
+    #for pidx, partition in enumerate(partitions):
+    #    p_min = partition[0]
+    #    p_max = partition[-1]
+    #
+    #    if len(partition) == 1:
+    #        print prefix + (tabchar * level) + ("} else " if pidx > 0 else "") + "if (wp[%d] == 0x%016X) {" % (level, swap_uint64(p_min))
+    #        if level >= maxlevel:
+    #            print prefix + (tabchar * (level + 1)) + "return 1;"
+    #        else:
+    #            subtree = tree[partition[0]]
+    #            print_switch(subtree, level=level + 1, maxlevel=maxlevel, prefix=prefix)
+    #            print prefix + (tabchar * (level + 1)) + "return 0;"
+    #    else:
+    #        print prefix + (tabchar * level) + ("} else " if pidx > 0 else "") + "if (wp[%d] >= 0x%016X && wp[%d] <= 0x%016X) {" % (level, swap_uint64(p_min), level, swap_uint64(p_max))
+    #
+    #        print prefix + (tabchar * (level + 1)) + "switch(wp[" + str(level) + "]){"
+    #        for idx, case in enumerate(partition):
+    #            subtree = tree[case]
+    #
+    #            if level >= maxlevel:
+    #                print prefix + (tabchar * (level + 1)) + "case " + str("0x%016X" % swap_uint64(case)) + ":return 1;" #+ " // Word: %s" % itoword[case]
+    #            else:
+    #                print prefix + (tabchar * (level + 1)) + "case " + str("0x%016X" % swap_uint64(case)) + ":" #+ " // Word: %s" % itoword[case]
+    #                print_switch(subtree, level=level + 1, maxlevel=maxlevel, prefix=prefix)
+    #        print prefix + (tabchar * (level + 1)) + "default:return 0;"
+    #        print prefix + (tabchar * (level + 1)) + "}" # endswitch
 
-# print json.dumps(collect_by_index(words), indent=2)
-# exit();
-
-import argparse
+    # print prefix + (tabchar * level) + "} else {"
+    # print prefix + (tabchar * (level + 1)) + "return 0;"
+    # print prefix + (tabchar * level) + "}" # endif
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--length', type=int, default=0)
 args = parser.parse_args()
 
-# print "#include <stdbool.h>"
-# print "#include <stdio.h>"
 print "#include <stdint.h>"
 
-# for l, w in lenToWords.iteritems():
-#     print_contains(w, name='contains%d' % l)
-
-# print "unsigned int contains(char * word, int len){"
-# print tabchar + "uint64_t * wp = (uint64_t *)word;"
-# print tabchar + "switch(len){"
-# for idx, l in enumerate(sorted(lenToWords.iterkeys(), key=lambda k: len(lenToWords[k]), reverse=True)):
 lengths = sorted(lenToWords.keys())
 for idx, l in enumerate(lengths):
     if args.length != l:
         continue
 
     w = lenToWords[l]
-    # print tabchar + "if (len == %d) { return contains%d(word); }" % (l, l)
-    # print tabchar + ("} else " if idx > 0 else "") + ("if (len == %d) {" % l)
-    # print tabchar + tabchar + "case %d:" % l
     print "unsigned int contains%d(uint64_t * wp) {" % l
     print_switch(
         collect_by_position(w),
         maxlevel=(ceil(((l - 1) / 8))),
-        prefix=(tabchar)
+        prefix=(tabchar),
+        length=l
     )
     print "}"
-
-
-# print tabchar + "} else {"
-# print tabchar + tabchar + "return 0;"
-# print tabchar + "}"
-# print tabchar + tabchar + "default:return 0;"
-# print tabchar + "}"
 
 if args.length > 0:
     exit()

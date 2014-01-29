@@ -1,6 +1,6 @@
 #include <stdint.h>
 unsigned int contains7(uint64_t * wp) {
-	switch(wp[0]){
+	switch(wp[0] | (uint64_t)(0x0020202020202020)){
 	case 0x0061626163616970:return 1;
 	case 0x006162616C6C6177:return 1;
 	case 0x006162617473616D:return 1;
