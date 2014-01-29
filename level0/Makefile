@@ -3,8 +3,8 @@ all:: level0
 CLANG := clang
 GCC ?= gcc
 LD ?= gcc
-CFLAGS := -std=c99 -pipe -m64 -march=native -O2
-LD_FLAGS := -std=c99 -pipe -m64 -march=native -O2
+CFLAGS := -std=c99 -pipe -m64 -march=native -Os
+LD_FLAGS := -std=c99 -pipe -m64 -march=native -Os
 REMOTE_HOST := ubuntu@es_prod-indexer-0
 
 
