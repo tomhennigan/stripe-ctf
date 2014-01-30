@@ -57,7 +57,7 @@ int main(int argc, const char *argv[])
 		for (j = 0; j < 4294967295; j++) {
 			memcpy(&current, &initial, sizeof(SHA_CTX));
 			sprintf(nonceBuffer, "%08X%08X", i, j);
-			SHA1_Update(&current, nonceBuffer, 32);
+			SHA1_Update(&current, nonceBuffer, 16);
 			SHA1_Final(buffer, &current);
 
 			sprintf(cmdDifficulty, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
