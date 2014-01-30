@@ -3,14 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 
-void printsha1(unsigned char * buffer)
-{
-	unsigned int i;
-	for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
-		printf("%02x", buffer[i]);
-	}
-	printf("\n");
-}
 
 int main(int argc, const char *argv[])
 {
@@ -28,15 +20,15 @@ int main(int argc, const char *argv[])
 
 	const char * seed = argv[4];
 
-	char cmdDifficulty[41];
+	char cmdDifficulty[41] = {0};
 
 	SHA_CTX current, initial;
 	unsigned char buffer[SHA_DIGEST_LENGTH] = {0};
-	char nonceBuffer[17] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	char nonceBuffer[17] = {0};
 
 	SHA1_Init(&initial);
 	SHA1_Update(&initial, "commit ", 7);
-	char lenBuf[10];
+	char lenBuf[10] = {};
 	sprintf(lenBuf, "%d", (int)(216 + strlen(seed)));
 	SHA1_Update(&initial, lenBuf, strlen(lenBuf));
 	SHA1_Update(&initial, "\0", 1);
@@ -60,17 +52,27 @@ int main(int argc, const char *argv[])
 			SHA1_Update(&current, nonceBuffer, 16);
 			SHA1_Final(buffer, &current);
 
-			sprintf(cmdDifficulty, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-				buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7], buffer[8], buffer[9],
-				buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17], buffer[18], buffer[19]);
+			// cmdDifficulty = hexdigest(buffer)
+			unsigned int b, c, o;
+			for (b = 0; b < 20; b++) {
+				c = (b * 2);
+				o = buffer[b] / 16;
 
-			// fprintf(stderr, "%s\n", nonceBuffer);
+				if (o < 10) {
+					cmdDifficulty[c + 0] = '0' + o;
+				} else {
+					cmdDifficulty[c + 0] = 'a' + (o - 10);
+				}
+
+				o = buffer[b] % 16;
+				if (o < 10) {
+					cmdDifficulty[c + 1] = '0' + o;
+				} else {
+					cmdDifficulty[c + 1] = 'a' + (o - 10);
+				}
+			}
 
 			if (strcmp(difficulty, cmdDifficulty) > 0) {
-				// puts(nonceBuffer);
-				// printsha1(buffer);
-				// break;
-
 				printf("tree %s\n", tree);
 				printf("parent %s\n", parent);
 				printf("author CTF user <me@example.com> 1390419400 +0000\n");
