@@ -30,7 +30,7 @@ miner: miner.c libcrypto.a
 	strip $@
 
 test:: miner
-	./miner `git write-tree` `git rev-parse HEAD` `cat ../difficulty.txt` ; echo
+	./miner `git write-tree` `git rev-parse HEAD` `cat ../difficulty.txt` | git hash-object -t commit --stdin
 
 clean::
 	rm -f miner
