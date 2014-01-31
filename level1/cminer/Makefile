@@ -29,5 +29,8 @@ miner: miner.c libcrypto.a
 	$(GCC) $(CFLAGS) $< libcrypto.a -o $@
 	strip $@
 
+test:: miner
+	./miner `git write-tree` `git rev-parse HEAD` `cat ../difficulty.txt` ; echo
+
 clean::
 	rm -f miner
