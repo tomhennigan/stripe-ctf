@@ -51,10 +51,32 @@ int main(int argc, const char *argv[])
 	return 0;
 }
 
+inline void hexdigest(const unsigned char * bin, unsigned char * asc, size_t len)
+{
+	unsigned int b, c, o;
+	for (b = 0; b < len; b++) {
+		c = (b * 2);
+		o = bin[b] / 16;
+
+		if (o < 10) {
+			asc[c + 0] = '0' + o;
+		} else {
+			asc[c + 0] = 'a' + (o - 10);
+		}
+
+		o = bin[b] % 16;
+		if (o < 10) {
+			asc[c + 1] = '0' + o;
+		} else {
+			asc[c + 1] = 'a' + (o - 10);
+		}
+	}
+
+	asc[len] = '\0';
+}
+
 void * miner_thread_main(void * seed)
 {
-	char cmdDifficulty[41] = {0};
-
 	SHA_CTX current, initial;
 	unsigned char buffer[SHA_DIGEST_LENGTH] = {0};
 	char nonceBuffer[17] = {0};
