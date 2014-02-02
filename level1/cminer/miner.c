@@ -78,9 +78,11 @@ inline void hexdigest(const unsigned char * bin, unsigned char * asc, size_t len
 void * miner_thread_main(void * seed)
 {
 	SHA_CTX current, initial;
+	unsigned char cmdDifficulty[41] = {0};
 	unsigned char buffer[SHA_DIGEST_LENGTH] = {0};
-	char nonceBuffer[17] = {0};
+	unsigned char nonceBuffer[17] = {0};
 
+	// Create the initial state.
 	SHA1_Init(&initial);
 	SHA1_Update(&initial, "commit ", 7);
 	char lenBuf[10] = {};
@@ -107,31 +109,18 @@ void * miner_thread_main(void * seed)
 			}
 
 			memcpy(&current, &initial, sizeof(SHA_CTX));
-			sprintf(nonceBuffer, "%08X%08X", i, j);
+
+			// Add nonce.
+			hexdigest((unsigned char *)&i, &nonceBuffer[0], 8);
+			hexdigest((unsigned char *)&j, &nonceBuffer[8], 8);
 			SHA1_Update(&current, nonceBuffer, 16);
+
+			// Aaaand commit.
 			SHA1_Final(buffer, &current);
 
-			// cmdDifficulty = hexdigest(buffer)
-			unsigned int b, c, o;
-			for (b = 0; b < 20; b++) {
-				c = (b * 2);
-				o = buffer[b] / 16;
+			hexdigest(buffer, cmdDifficulty, 20);
 
-				if (o < 10) {
-					cmdDifficulty[c + 0] = '0' + o;
-				} else {
-					cmdDifficulty[c + 0] = 'a' + (o - 10);
-				}
-
-				o = buffer[b] % 16;
-				if (o < 10) {
-					cmdDifficulty[c + 1] = '0' + o;
-				} else {
-					cmdDifficulty[c + 1] = 'a' + (o - 10);
-				}
-			}
-
-			if (strcmp(difficulty, cmdDifficulty) > 0) {
+			if (strcmp(difficulty, (char *)cmdDifficulty) > 0) {
 				pthread_mutex_lock(&found_mutex);
 				if (found == 0) {
 					found = 1;
