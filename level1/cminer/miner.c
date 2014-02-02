@@ -24,8 +24,19 @@ int main(int argc, const char *argv[])
 	parent = argv[2];      // "000000f90e262c8df1af70e3a73a63cd71200b89"
 	difficulty = argv[3];  // "000001"
 
-	unsigned int n, n_threads = 100;
+	if (strlen(tree) != 40) {
+		fprintf(stderr, "error: tree argument should be an sha1 hash\n");
+		return 1;
+	}
+
+	if (strlen(parent) != 40) {
+		fprintf(stderr, "error: parent argument should be an sha1 hash\n");
+		return 1;
+	}
+
+	unsigned int n_threads = 8;
 	pthread_t ** threads = malloc(sizeof(pthread_t *) * n_threads);
+	unsigned int n;
 	for (n = 0; n < n_threads; n++) {
 		char * seed = malloc(sizeof(char) * 20);
 		sprintf(seed, "Thread %d", n);
