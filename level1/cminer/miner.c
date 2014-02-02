@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <openssl/sha.h>
 #include <string.h>
-#include <stdint.h>
 #include <pthread.h>
 #include <stdlib.h>
 
@@ -67,7 +66,7 @@ void * miner_thread_main(void * seed)
 	SHA1_Update(&initial, seed, strlen(seed));
 	SHA1_Update(&initial, "\n\n", 2);
 
-	uint32_t i, j;
+	unsigned int i, j;
 	for (i = 0; i < 4294967295; i++) {
 		for (j = 0; j < 4294967295; j++) {
 			if (found != 0) {
