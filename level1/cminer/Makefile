@@ -1,5 +1,5 @@
 GCC := gcc
-CFLAGS := -Wno-deprecated -arch x86_64 -Ofast -march=native -funroll-loops
+CFLAGS := -Wno-deprecated -O2 -march=native -funroll-loops
 
 OPENSSL_VERSION := 1.0.0
 
@@ -8,17 +8,18 @@ all:: miner
 # OpenSSL.
 
 openssl-$(OPENSSL_VERSION).tar.gz:
-	exit 1
 	curl -O http://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz
 	touch $@
 
+.PHONY:: openssl
+openssl:: openssl-$(OPENSSL_VERSION)
 openssl-$(OPENSSL_VERSION): openssl-$(OPENSSL_VERSION).tar.gz
 	tar -xzvf openssl-$(OPENSSL_VERSION).tar.gz
 	touch $@
 	cd openssl-$(OPENSSL_VERSION) ; ./Configure darwin64-x86_64-cc no-shared no-threads && make
 
-libcrypto.a: openssl-$(OPENSSL_VERSION)
-	cp $</$@ $@
+libcrypto.a:
+	cp openssl-$(OPENSSL_VERSION)/$@ $@
 	touch $@
 
 clean::
